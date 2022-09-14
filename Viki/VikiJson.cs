@@ -1,6 +1,6 @@
 ﻿namespace Viki
 {
-    internal class Json
+    internal class VikiJson
     {
         public class Rootobject
         {

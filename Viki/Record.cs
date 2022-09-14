@@ -1,7 +1,12 @@
 ﻿using System.Net;
 using System.Net.Mail;
+using static Viki.Config;
+
 namespace Viki
 {
+    /// <summary>
+    /// Compiles and sends a simple bug report.
+    /// </summary>
     internal class Record
     {
         internal static string CompileBugReport(Exception ex, System.Diagnostics.StackTrace st)
@@ -17,7 +22,6 @@ namespace Viki
                 string lnCrash = x.GetFileLineNumber().ToString();
                 string clnCrash = x.GetFileColumnNumber().ToString();
 
-                //report = $"\n{new string('*', date.Length+4)}\n* {date} *\n{new string('*', date.Length+4)}\n\nClass  : {classCrash}\nMethod : {methodCrash}\nLine   : {lnCrash}\nColumn : {clnCrash}\n\nMessage\n{ex.Message}\n\nStackTrace\n{ex.StackTrace}".Trim();
                 report = $@"<h1>An exception occurred</h1>
 <h2>Environment</h2>
 <ul><b>
@@ -57,7 +61,7 @@ namespace Viki
                         rtf.ScrollToCaret();
                     }
                     Log("Error:" + ex.Message);
-                    if (!Form1.feedback)
+                    if (!Feedback)
                         return;
                     Log("Compiling bug report.");
                     var fromAddress = new MailAddress("PowerShell.ODiUM@gmail.com", Environment.MachineName);
@@ -89,7 +93,8 @@ namespace Viki
                         }
                         catch (Exception ex)
                         {
-                            Log("Error sending bug report.");
+                            Log("Error sending bug report. Message:");
+                            Log(ex.Message);
                             MessageBox.Show(message.Body);
                         }
                     }

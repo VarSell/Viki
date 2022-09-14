@@ -1,8 +1,8 @@
-﻿using RestSharp;
-using HtmlAgilityPack;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
+using static Viki.Other;
+using static Viki.Config;
 
 namespace Viki
 {
@@ -10,68 +10,71 @@ namespace Viki
     {
         internal int Episodes { get; set; }
         internal int EpisodeNumber { get; set; }
-        internal string Title { get; set; }
-        internal string Release { get; set; }
-        internal string Language { get; set; }
-        internal string TitleMeta { get; set; }
-        internal string ReleaseYear { get; set; }
-
+        internal string Title { get; set; } = String.Empty;
+        internal string Release { get; set; } = String.Empty;
+        internal string Language { get; set; } = String.Empty;
+        internal string TitleMeta { get; set; } = String.Empty;
+        internal string ReleaseYear { get; set; } = String.Empty;
+        internal string DecryptionKey { get; set; } = String.Empty;
 
         public void VParse(string url)
         {
 
-            string html = Source(url);
-
+            string html = GetSourceHTML(url);
             string sUrl = html.Split("<link rel=\"canonical\" href=")[1].Split("/>")[0].Replace("\"", String.Empty);
-
             this.Title = GetSafeFilename(html.Split("content=\"https://play.google.com/store/apps/details?id=com.viki.android\"/><title>")[1].Split("|")[0]);
 
-            sUrl = Source(sUrl);
+            sUrl = GetSourceHTML(sUrl);
 
             string script = sUrl.Split("application/ld+json")[1].Split(">")[1].Split("</script")[0].Trim();
-            //Console.WriteLine(script);
-            var j = JsonConvert.DeserializeObject<Json.Rootobject>(script);
+            var j = JsonConvert.DeserializeObject<VikiJson.Rootobject>(script);
             Console.WriteLine(j.url);
             this.Language = j.inLanguage;
-            //Console.WriteLine(j.name);
             this.TitleMeta = j.alternativeHeadline[0];
             this.ReleaseYear = j.datePublished;
         }
-        public void Decrypt(string encFile, string outFile, string key)
+        public void Decrypt(string encFile, string outFile)
         {
-            Form1.SoftWare($" input=\"{encFile}\",stream=0,output=\"{outFile}\" --enable_raw_key_decryption --keys label=0:key_id={key.Split(":")[0]}:key={key.Split(":")[1]}", "tools\\shakapackager.exe");
+            Form1.SoftWare($" input=\"{encFile}\",stream=0,output=\"{outFile}\" --enable_raw_key_decryption --keys label=0:key_id={this.DecryptionKey.Split(":")[0]}:key={this.DecryptionKey.Split(":")[1]}", "tools\\shakapackager.exe");
         }
+        /// <summary>
+        /// Merges the given audio and video streams along with any .srt subtitles found in the \src\dump\ folder.
+        /// </summary>
         public void Merge(string aFile, string vFile, string oFile)
         {
-            // sort the subtitles
-            string[] subs = Directory.GetFiles($@"{AppDomain.CurrentDomain.BaseDirectory}src\dump\", "*.srt");
             string subArgs = string.Empty;
-
-            foreach (string file in subs)
+            if (DownloadSubtitles)
             {
-                string cult = ((Path.GetFileNameWithoutExtension(file)).Split("]")[1].Replace(".", string.Empty));
-                if (new FileInfo(file).Length > 7000)
+                string ext = String.Empty;
+                string[] subs = Directory.GetFiles($@"{AppDomain.CurrentDomain.BaseDirectory}src\dump\", "*.srt");
+
+                foreach (string file in subs)
                 {
-                    string lang = Form1.Culture(cult);
-                    string subDef = "no";
-                    if (cult == "en")
+                    string cult = Path.GetFileNameWithoutExtension(file).Split("]")[1].Replace(".", string.Empty);
+                    // Anything less than 7kb is sure to be useless.
+                    if (new FileInfo(file).Length > 7000)
                     {
-                        subDef = "yes";
-                    }
-                    if (lang == "und"  || String.IsNullOrEmpty(lang))
-                    {
-                        subArgs += $" --track-name \"0:{cult}\" --language 0:und --compression 0:none --default-track 0:{subDef} \"{file}\"";
-                    }
-                    else
-                    {
-                        subArgs += $" --track-name \"0:{lang}\" --language 0:{cult} --compression 0:none --default-track 0:{subDef} \"{file}\"";
+                        string lang = Culture(cult);
+                        string subDef = "no";
+                        if (cult == "en")
+                        {
+                            subDef = "yes";
+                        }
+                        if (lang == "und"  || String.IsNullOrEmpty(lang))
+                        {
+                            subArgs += $" --track-name \"0:{cult}\" --language 0:und --compression 0:none --default-track 0:{subDef} \"{file}\"";
+                        }
+                        else
+                        {
+                            subArgs += $" --track-name \"0:{lang}\" --language 0:{cult} --compression 0:none --default-track 0:{subDef} \"{file}\"";
+                        }
                     }
                 }
             }
-            //("-o $var$release.mkv$var --language 0:$flang --compression 0:none --default-track 0:yes .\src\temp\processing.mkv $audio_merge $chapters $tags --title $var$header$var $paths") ----------     {/*this.Tags*/} right after aFile
-            string a = $"-o \"{Path.Combine(oFile, this.Release)}.mkv\" --language 0:ko --compression 0:none --default-track 0:yes \"{vFile}\" --language 0:ko --compression 0:none --default-track 0:yes \"{aFile}\"  --title \"{this.TitleMeta}\" {subArgs}";
 
+            string a = $"-o \"{Path.Combine(oFile, this.Release)}.mkv\" --language 0:ko --compression 0:none --default-track 0:yes \"{vFile}\" --language 0:ko --compression 0:none --default-track 0:yes \"{aFile}\"  --title \"{this.TitleMeta}\" {subArgs}";
             string tagDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\metadata.xml");
+
             if (File.Exists(tagDir))
             {
                 a += $" --global-tags \"{tagDir}\"";
@@ -85,17 +88,21 @@ namespace Viki
             prc.StartInfo.UseShellExecute = false;
             prc.StartInfo.RedirectStandardOutput = true;
             prc.Start();
-            Form1.procLog = prc.StandardOutput.ReadToEnd();
+            ProcessLog = prc.StandardOutput.ReadToEnd();
             prc.WaitForExit();
         }
+        /// <summary>
+        /// Generates and writes track titles to the file given stream ID.
+        /// </summary>
         public void Tag(string file, int streamID)
         {
             string args = String.Empty;
 
             if (streamID == 1)
             {
+                // Video Stream ID
                 string[] parts = new string[5];
-                parts[0] = Form1.Culture(this.Language); // not needed
+                parts[0] = Culture(this.Language); // I'll leave this out from the track title
                 parts[1] = MediaInfo($"\"{file}.mkv\" --Inform=Video;%BitRate%");
                 parts[2] = MediaInfo($"\"{file}.mkv\" --Inform=Video;%FrameRate%");
                 parts[3] = MediaInfo($"\"{file}.mkv\" --Inform=Video;%AspectRatio%");
@@ -105,9 +112,9 @@ namespace Viki
             }
             else if (streamID == 2)
             {
-                //Japanese / AAC Audio / 2.0 / 48 kHz / 192 kbps
+                // Audio Stream ID
                 string[] parts = new string[6];
-                parts[0] = Form1.Culture(this.Language);
+                parts[0] = Culture(this.Language);
                 parts[1] = MediaInfo($"\"{file}.mkv\" --output").Split("Audio")[1].Split("2")[1].Split(":")[1].Split("F")[0].Trim();
                 parts[2] = MediaInfo($"\"{file}.mkv\" --Inform=Audio;%Channel(s)%");
                 switch (Int32.Parse(parts[2]))
@@ -129,13 +136,13 @@ namespace Viki
                         break;
                 }
                 parts[3] = MediaInfo($"\"{file}.mkv\" --Inform=Audio;%SamplingRate%");
-                //parts[4] = MediaInfo($"\"{this.Release}.mkv\" --Inform=Audio;%BitDepth%");
+                //parts[4] = MediaInfo($"\"{this.Release}.mkv\" --Inform=Audio;%BitDepth%"); // I don't want this for now.
                 parts[5] = (Int32.Parse(MediaInfo($"\"dump//decAudio.mp4\" --Inform=General;%OverallBitRate%")) / 1024).ToString();
                 args = String.Concat(parts[0], " / ", parts[1], " / ", parts[2], " / ", parts[3].Insert(2, "."), " kHz / ", parts[5] , " KiBps");
             }
             else
             {
-                Form1.procLog = $"Invalid stream ID '{streamID.ToString()}'.";
+                ProcessLog = $"Invalid stream ID '{streamID.ToString()}'.";
             }
 
             args = $"\"{file}.mkv\" --edit track:{streamID} --set name=\"{args}\"";
@@ -148,9 +155,88 @@ namespace Viki
             prc.StartInfo.CreateNoWindow = true;
             prc.StartInfo.RedirectStandardOutput = true;
             prc.Start();
-            Form1.procLog = prc.StandardOutput.ReadToEnd();
+            ProcessLog = prc.StandardOutput.ReadToEnd();
             prc.WaitForExit();
         }
+        public string[] ParseStreamsLinks(string[] manifest)
+        {
+            // this method also assumes that the high manifest is passes to it, thus the link concats
+            string[] links = new string[2];
+            foreach (string ln in manifest)
+            {
+                if (ln.Contains("_dash_high_1080p") && ln.Contains("audio"))
+                {
+                    string l = ln.Split("<BaseURL>")[1].Split("</BaseURL>")[0];
+                    l = String.Concat("https://cloudfront.viki.net/", l.Split("_")[0], "/dash/", l);
+                    links[0] = l;
+                }
+                if (ln.Contains("mov_drm") && ln.Contains("audio"))
+                {
+                    string l = ln.Split("<BaseURL>")[1].Split("</BaseURL>")[0];
+                    l = String.Concat("https://cloudfront.viki.net/", l.Split("_")[0], "/dash/", l);
+                    links[0] = l;
+                }
+                /*if (line.Contains("_dash_high_720p") && line.Contains("video"))
+                {
+                    videoUrl = CleanLink(line);
+                }*/
+                if (ln.Contains("_dash_high_1080p") && ln.Contains("video"))
+                {
+                    string l = ln.Split("<BaseURL>")[1].Split("</BaseURL>")[0];
+                    l = String.Concat("https://cloudfront.viki.net/", l.Split("_")[0], "/dash/", l);
+                    links[1] = l;
+                }
+                if (ln.Contains("mov_drm") && ln.Contains("video"))
+                {
+                    string l = ln.Split("<BaseURL>")[1].Split("</BaseURL>")[0];
+                    l = String.Concat("https://cloudfront.viki.net/", l.Split("_")[0], "/dash/", l);
+                    links[1] = l;
+                }
+            }
+            return links;
+        }
+        public string[] ParseSDStreamsLinks(string file)
+        {
+            string CleanLink(string line)
+            {
+                line = line.Substring(line.IndexOf("https"));
+                line = line.Substring(0, line.IndexOf("<"));
+                return line;
+            }
+            string[] tmp = new string[2];
+            foreach (string line in File.ReadAllLines(file))
+            {
+                /*if (line.Contains("_dash_high_720p") && line.Contains("audio"))
+                {
+                    audioUrl = CleanLink(line);
+                }*/
+                if (line.Contains("_dash_high_1080p") && line.Contains("audio"))
+                {
+                    tmp[0] = CleanLink(line);
+                }
+                if (line.Contains("mov_drm") && line.Contains("audio"))
+                {
+                    tmp[0] = CleanLink(line);
+                }
+                // _dash_high_1080p_mov_drm
+                /*if (line.Contains("_dash_high_720p") && line.Contains("video"))
+                {
+                    videoUrl = CleanLink(line);
+                }*/
+                if (line.Contains("_dash_high_1080p") && line.Contains("video"))
+                {
+                    tmp[1] = CleanLink(line);
+                }
+                if (line.Contains("mov_drm") && line.Contains("video"))
+                {
+                    tmp[2] = CleanLink(line);
+                }
+            }
+            return tmp;
+        }
+        /// <summary>
+        /// Starts '\src\tools\MediaInfo.exe' with the given arguments, and returns the output.
+        /// </summary>
         public static string MediaInfo(string args, bool std = false)
         {
             Process SoftWare = new Process();
@@ -184,17 +270,6 @@ namespace Viki
                     return result.Trim();
                 }
             }
-        }
-        internal static string GetSafeFilename(string filename)
-        {
-            return string.Join(String.Empty, filename.Split(Path.GetInvalidFileNameChars())).Trim();
-        }
-        public static string Source(String url)
-        {
-            var client = new RestClient(url);
-            var request = new RestRequest();
-            var response = client.Execute(request);
-            return response.Content;
         }
     }
 }

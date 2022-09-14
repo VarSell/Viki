@@ -84,7 +84,6 @@
             this.vikiLink.Name = "vikiLink";
             this.vikiLink.Size = new System.Drawing.Size(274, 23);
             this.vikiLink.TabIndex = 3;
-            this.vikiLink.TextChanged += new System.EventHandler(this.vikiLink_TextChanged);
             // 
             // label1
             // 
@@ -117,11 +116,11 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.label3.ForeColor = System.Drawing.SystemColors.ActiveCaption;
             this.label3.Location = new System.Drawing.Point(491, 24);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(57, 15);
+            this.label3.Size = new System.Drawing.Size(55, 15);
             this.label3.TabIndex = 8;
             this.label3.Text = "Filename";
             // 
@@ -138,11 +137,11 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.label4.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.label4.Location = new System.Drawing.Point(560, 166);
+            this.label4.Location = new System.Drawing.Point(581, 165);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(75, 21);
+            this.label4.Size = new System.Drawing.Size(142, 21);
             this.label4.TabIndex = 10;
-            this.label4.Text = "Metadata";
+            this.label4.Text = "github.com/VarSell";
             // 
             // headerMeta
             // 
@@ -359,11 +358,11 @@
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button1.ForeColor = System.Drawing.Color.DodgerBlue;
-            this.button1.Location = new System.Drawing.Point(198, 65);
+            this.button1.Location = new System.Drawing.Point(181, 65);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(82, 26);
             this.button1.TabIndex = 1;
-            this.button1.Text = "Settings";
+            this.button1.Text = "Downloads";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -423,6 +422,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Viki";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.backDrop)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Net;
-using System.Net.Mail;
-
 namespace Viki
 {
     internal static class Program

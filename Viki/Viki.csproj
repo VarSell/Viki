@@ -8,6 +8,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>rakuten-viki.ico</ApplicationIcon>
     <UseWPF>True</UseWPF>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <SignAssembly>False</SignAssembly>
+    <ErrorReport>none</ErrorReport>
+    <AssemblyVersion>0.2.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.43" />
     <PackageReference Include="RestSharp" Version="108.0.1" />
     <PackageReference Include="Selenium.WebDriver" Version="4.3.0" />
   </ItemGroup>

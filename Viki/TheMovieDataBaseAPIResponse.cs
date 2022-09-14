@@ -1,15 +1,13 @@
 ﻿namespace Viki
 {
-    internal class API
+    internal class TheMovieDataBaseAPIResponse
     {
         public class Rootobject
         {
-            // MERGED JSON FROM TV TO FILM
             public string name;
             public string first_air_date;
             public string original_name;
 
-            // FINISHED MODIFIED JSON
             public bool adult { get; set; }
             public string backdrop_path { get; set; }
             public Belongs_To_Collection belongs_to_collection { get; set; }
