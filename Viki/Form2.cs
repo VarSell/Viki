@@ -5,25 +5,10 @@ namespace Viki
 {
     public partial class Form2 : Form
     {
-        //internal static string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\data\config");
-        //internal static byte[] config = TryFileRead();
         public Form2()
         {
             InitializeComponent();
         }
-
-        /*internal static byte[] TryFileRead()
-        {
-            try
-            {
-                return File.ReadAllBytes(file);
-            }
-            catch
-            {
-                File.WriteAllBytes(file, new byte[] { 0x0, 0x1, 0x1, 0x0, 0x0 });
-            }
-            return File.ReadAllBytes(file);
-        }*/
         internal void ReadConfig()
         {
             this.checkBox1.Checked = Properties.Settings.Default.Feedback;
@@ -154,8 +139,13 @@ namespace Viki
                 }
             }
 
-            Form3 f = new Form3();
+            Form3 f = GetF();
             f.Show();
+        }
+
+        private static Form3 GetF()
+        {
+            return new Form3();
         }
     }
 }

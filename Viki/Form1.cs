@@ -411,67 +411,7 @@ namespace Viki
             }
 
         }
-        /// <summary>
-        /// Loops (using a generic filter) through performance logs from given driver until the following conditions are met:
-        /// 1; Manifest url is found.  2; License url is found.
-        /// Should be called right after starting the stream.
-        /// </summary>
-        public string[] GetLinksFromDriver(IWebDriver driver)
-        {
-            string mpd = String.Empty;
-            string lic = String.Empty;
-            bool foundMPD = false;
-            bool foundLIC = false;
-
-            while (!foundMPD || !foundLIC)
-            {
-                foreach (LogEntry? log in driver.Manage().Logs.GetLog("performance"))
-                {
-                    try
-                    {
-                        if (log.ToString().Contains(".mpd") && foundMPD == false)
-                        {
-                            foundMPD = true;
-                            string[] msgArr = log.Message.Split(",");
-                            foreach (string ln in msgArr)
-                            {
-                                if (ln.Contains("manifest"))
-                                {
-                                    Log("Found manifest.");
-                                    string manifest = ln.Replace("\"", String.Empty).Split("url:")[1].Split("}")[0];
-                                    mpd = manifest;
-                                }
-                            }
-                        }
-                        if (log.ToString().Contains("license") && foundLIC == false)
-                        {
-                            foundLIC = true;
-                            string[] msgArr = log.Message.Split(",");
-                            foreach (string ln in msgArr)
-                            {
-                                if (ln.Contains("license"))
-                                {
-                                    Log("Found license.");
-                                    string license = ln.Replace("\"", String.Empty).Split("url:")[1].Split("}")[0];
-                                    lic = license;
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                }
-            }
-
-            return new string[] { mpd, lic };
-        }
-        public void ResetPage(OpenQA.Selenium.IWebDriver drv)
-        {
-            driver.Manage().Logs.GetLog("performance");
-            drv.Navigate().GoToUrl("about:blank");
-        }
+        
         /*
         internal string GetPSSHFromFragment(string manifest)
         {
@@ -562,20 +502,12 @@ namespace Viki
                 }
                 else
                 {
-                    if (Aria2cVerbose)
-                    {
-                        // Could break control in some cases.
-                        ShowProcess_2 = true;
-                    }
-                    else
-                    {
-                        ShowProcess_2 = false;
-                    }
+                    ShowProcess_2 = Aria2cVerbose;
                     Log("ARIA2C_Downloading Audio.");
                     SoftWare_2($"yt-dlp --allow-u -f ba --external-downloader \"tools\\aria2c.exe\" -o \"dump\\encAudio.mp4\" \"{this.audioUrl.Text}\"");
                     Log("ARIA2C_Downloading Video.");
                     SoftWare_2($"yt-dlp --allow-u -f bv --external-downloader \"tools\\aria2c.exe\" -o \"dump\\encVideo.mp4\" \"{this.audioUrl.Text}\"");
-                    
+                    ShowProcess_2 = Aria2cVerbose;
                     if (!File.Exists(@"dump\encAudio.mp4") || !File.Exists(@"dump\encVideo.mp4"))
                     {
                         Log("[D] DOWNLOAD_FAILURE");
@@ -708,14 +640,13 @@ namespace Viki
             rescan:
 
                 string plusParam = String.Empty;
-                if ((Config.IsPremiumContent && Config.UserEmail != String.Empty && Config.UserPassword != String.Empty) || needLogin)
+                if ((IsPremiumContent && UserEmail != String.Empty && UserPassword != String.Empty) || needLogin)
                 {
                     Log("Using Login.", 1);
                     plusParam = $"--username \"{Config.UserEmail}\" --password \"{Config.UserPassword}\"";
                 }
 
                 string args = $"yt-dlp {plusParam} --all-subs --skip-download --allow-u --sub-format \"srt\" \"{this.vikiLink.Text}\" -P \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump")}\"";
-                //ShowProcess_2 = true; //too much spamming will break the control, crashing the application
                 SoftWare_2(args);
                 string[] subs = Directory.GetFiles($@"{AppDomain.CurrentDomain.BaseDirectory}src\dump\", "*.srt");
                 if (Directory.EnumerateFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump"), "*.srt", SearchOption.AllDirectories).FirstOrDefault() == null)
@@ -750,7 +681,6 @@ namespace Viki
                 this.button4.Enabled = enabled;
             });
         }
-        internal static List<String> tags = new List<String>();
         public void LoadXmlTags()
         {
             if (String.IsNullOrEmpty(this.tmdb.Text))
@@ -776,15 +706,13 @@ namespace Viki
                 "    </Tag>",
                 "</Tags>" };
 
+
+            List<String> tags = new List<String>();
             for (int i = 0; i < _tags.Length; i++)
             {
                 tags.Add(_tags[i]);
             }
             File.WriteAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\metadata.xml"), tags);
-            /*if (this.releaseName.Text.Contains("Episode"))
-            {
-                //
-            }*/
         }
         /// <summary>
         /// Checks to see whether the PC is connected to a network.
@@ -826,7 +754,6 @@ namespace Viki
             {
                 string[] details = new string[7];
                 TheMovieDataBaseAPIResponse.Rootobject result = JsonConvert.DeserializeObject<TheMovieDataBaseAPIResponse.Rootobject>(response.Content);
-                //TheMovieDataBaseAPIResponse.Production_Countries P_C = JsonConvert.DeserializeObject<TheMovieDataBaseAPIResponse.Production_Countries>(response.Content);
 
                 if (kind == "movie")
                 {

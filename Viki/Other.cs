@@ -190,6 +190,65 @@ namespace Viki
             }*/
         }
         /// <summary>
+        /// Loops (using a generic filter) through performance logs from given driver until the following conditions are met:
+        /// 1; Manifest url is found.  2; License url is found.
+        /// Should be called right after starting the stream.
+        /// </summary>
+        internal static string[] GetLinksFromDriver(IWebDriver driver)
+        {
+            string mpd = String.Empty;
+            string lic = String.Empty;
+            bool foundMPD = false;
+            bool foundLIC = false;
+
+            while (!foundMPD || !foundLIC)
+            {
+                foreach (LogEntry? log in driver.Manage().Logs.GetLog("performance"))
+                {
+                    try
+                    {
+                        if (log.ToString().Contains(".mpd") && foundMPD == false)
+                        {
+                            foundMPD = true;
+                            string[] msgArr = log.Message.Split(",");
+                            foreach (string ln in msgArr)
+                            {
+                                if (ln.Contains("manifest"))
+                                {
+                                    string manifest = ln.Replace("\"", String.Empty).Split("url:")[1].Split("}")[0];
+                                    mpd = manifest;
+                                }
+                            }
+                        }
+                        if (log.ToString().Contains("license") && foundLIC == false)
+                        {
+                            foundLIC = true;
+                            string[] msgArr = log.Message.Split(",");
+                            foreach (string ln in msgArr)
+                            {
+                                if (ln.Contains("license"))
+                                {
+                                    string license = ln.Replace("\"", String.Empty).Split("url:")[1].Split("}")[0];
+                                    lic = license;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+
+            return new string[] { mpd, lic };
+        }
+        internal static void ResetPage(IWebDriver drv)
+        {
+            drv.Manage().Logs.GetLog("performance");
+            drv.Navigate().GoToUrl("about:blank");
+        }
+        /// <summary>
         /// Takes a two-letter ISO 639-1 code and returns it's Display Name in English.
         /// </summary>
         internal static string Culture(string new_cult)
