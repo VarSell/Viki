@@ -14,21 +14,11 @@ namespace Viki
     public partial class Form1 : Form
     {
         internal static IWebDriver driver;
-
         public Viki v = new Viki();
         public Form1()
         {
             InitializeComponent();
         }
-        /*public void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
-        {
-            _=SendBugReport(e.Exception, new StackTrace(true));
-        }
-
-        public void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            _=SendBugReport(e.ExceptionObject as Exception, new StackTrace(true));
-        }*/
 
         /// <summary>
         /// Downloads the passed url and reports the progress to a progressBar.
@@ -51,15 +41,15 @@ namespace Viki
         {
             if (VikiIsLogged)
             {
-                Log("Logged in.");
+                Log("Already Logged in.");
                 LoadPage(driver, this.vikiLink.Text.Trim());
                 return;
             }
             string[] credentials = File.ReadAllLines("credentials.txt");
             try
             {
-                Config.UserEmail = credentials[0];
-                Config.UserPassword = credentials[1];
+                UserEmail = credentials[0];
+                UserPassword = credentials[1];
                 if (String.IsNullOrEmpty(UserEmail) || String.IsNullOrEmpty(UserPassword))
                 {
                     throw new IndexOutOfRangeException();
@@ -92,18 +82,6 @@ namespace Viki
         [STAThread] // doesn't do shit
         private async void button1_Click(object sender, EventArgs e)
         {
-            /*
-            string DECRYPTION_KEY_TRUE = "5e1f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
-            string DECRYPTION_KEY_FALSE_0 = "511f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
-            string DECRYPTION_KEY_FALSE_1 = "521f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
-            string[] DECRYPTION_ARRAY = { DECRYPTION_KEY_FALSE_1, DECRYPTION_KEY_TRUE, DECRYPTION_KEY_FALSE_0 };
-            string inFile = @"C:\Users\User\source\repos\Viki\Viki\bin\Debug\net6.0-windows\src\encVideo.mp4";
-            string oFile = @"C:\Users\User\source\repos\Viki\Viki\bin\Debug\net6.0-windows\src\encVideo.mp4";
-
-            DecryptWithKeyArray(inFile, oFile, DECRYPTION_ARRAY);*/
-
-            //consoleControl1.StartProcess("yt-dlp", "\"https://manifest-kcp.viki.io/v1/1153146v/limelight/main/mpd/normal/kcp/high/hd/kcp/dt2_dt3/manifest.mpd?\" --allow-u -f ba");
-
             await Task.Run(() =>
             {
                 try
@@ -399,9 +377,7 @@ namespace Viki
 
         public void proc_2_DataReceived(object sender, DataReceivedEventArgs e)
         {
-            //LogBox.ScrollToCaret();
             LogBox.ScrollToCaret();
-            //35cfc571679545829b322475ac8af898:cf7c7fcaaf2380e47d6f375a5adc05ae
             if (e.Data != null)
             {
                 if (ShowProcess_2)
@@ -412,16 +388,6 @@ namespace Viki
 
         }
         
-        /*
-        internal string GetPSSHFromFragment(string manifest)
-        {
-            Log("Downloading fragment.");
-            SoftWare_2($"yt-dlp --test --allow-u -f bv -o \"dump\\fragment.mp4\" \"{manifest}\"");
-            Log("Retrieving initData.");
-            SoftWare(@"scripts\PSSHFromFrag.py");
-            File.Delete(@"dump\fragment.mp4");
-            return Clipboard.GetText();
-        }*/
         /// <summary>
         /// Generates a PSSH (initialization data) using the widevine UUID.
         /// </summary>
