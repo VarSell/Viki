@@ -60,13 +60,13 @@ namespace Viki
                         rtf.AppendText(" - "+message+Environment.NewLine);
                         rtf.ScrollToCaret();
                     }
-                    Log("Error:" + ex.Message);
+                    Log("Error: " + ex.Message);
                     if (!Feedback)
                         return;
                     Log("Compiling bug report.");
-                    var fromAddress = new MailAddress("PowerShell.ODiUM@gmail.com", Environment.MachineName);
-                    var toAddress = new MailAddress("AcaelusThorne6430@gmail.com", "Reciever");
-                    const string fromPassword = "znebxalsvnrhmtvx";
+                    var fromAddress = new MailAddress("INVALID_DATA", Environment.MachineName);
+                    var toAddress = new MailAddress("INVALID_DATA", "Reciever");
+                    const string fromPassword = "INVALID_DATA";
                     string body = Record.CompileBugReport(ex, st).Replace(Environment.UserName, "User");
 
                     var smtp = new SmtpClient

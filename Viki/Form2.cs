@@ -5,14 +5,14 @@ namespace Viki
 {
     public partial class Form2 : Form
     {
-        internal static string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\data\config");
-        internal static byte[] config = TryFileRead();
+        //internal static string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\data\config");
+        //internal static byte[] config = TryFileRead();
         public Form2()
         {
             InitializeComponent();
         }
 
-        internal static byte[] TryFileRead()
+        /*internal static byte[] TryFileRead()
         {
             try
             {
@@ -20,49 +20,81 @@ namespace Viki
             }
             catch
             {
-                File.WriteAllBytes(file, new byte[] { 0x0, 0x1, 0x1, 0x0 });
+                File.WriteAllBytes(file, new byte[] { 0x0, 0x1, 0x1, 0x0, 0x0 });
             }
             return File.ReadAllBytes(file);
-        }
+        }*/
         internal void ReadConfig()
         {
-            this.checkBox1.Checked = Convert.ToBoolean(config[0]);
-            this.checkBox2.Checked = Convert.ToBoolean(config[1]);
-            this.checkBox3.Checked = Convert.ToBoolean(config[2]);
-            this.checkBox4.Checked = Convert.ToBoolean(config[3]);
+            this.checkBox1.Checked = Properties.Settings.Default.Feedback;
+            this.checkBox2.Checked = Properties.Settings.Default.DownloadSubtitles;
+            this.checkBox3.Checked = Properties.Settings.Default.UseXMLTagsWhenAvailable;
+            this.checkBox4.Checked = Properties.Settings.Default.Debug;
+            this.checkBox5.Checked = Properties.Settings.Default.Beta;
+            this.checkBox6.Checked = Properties.Settings.Default.Aria2cVerbose;
+            this.textBox1.Text = Properties.Settings.Default.SrtByteLimit.ToString();
         }
-        private void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
-            byte[] config = new byte[]
+            try
+            {
+                Properties.Settings.Default.SrtByteLimit = Int32.Parse(this.textBox1.Text);
+            }
+            catch
+            {
+                toolTip1.Show("Invalid Value.", this.textBox1);
+                await Task.Run(() =>
                 {
-                    Convert.ToByte(this.checkBox1.Checked),
-                    Convert.ToByte(this.checkBox2.Checked),
-                    Convert.ToByte(this.checkBox3.Checked),
-                    Convert.ToByte(this.checkBox4.Checked)
-                };
-            File.WriteAllBytes(file, config);
-            Form2.config = File.ReadAllBytes(file);
+                    Thread.Sleep(3000);
+                    toolTip1.Hide(this.textBox1);
+                });
+                return;
+            }
+
+            Properties.Settings.Default.Beta = this.checkBox5.Checked;
+            Beta = this.checkBox5.Checked;
+            Properties.Settings.Default.Save();
             this.Close();
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             Feedback = this.checkBox1.Checked;
+            Properties.Settings.Default.Feedback = Feedback;
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
             DownloadSubtitles = this.checkBox2.Checked;
+            Properties.Settings.Default.DownloadSubtitles = DownloadSubtitles;
         }
 
         private void checkBox3_CheckedChanged(object sender, EventArgs e)
         {
             UseXMLTagsWhenAvailable = this.checkBox3.Checked;
+            Properties.Settings.Default.UseXMLTagsWhenAvailable = UseXMLTagsWhenAvailable;
         }
 
         private void checkBox4_CheckedChanged(object sender, EventArgs e)
         {
             Debug = this.checkBox4.Checked;
+            Properties.Settings.Default.Debug = Debug;
+        }
+        private void checkBox5_CheckedChanged(object sender, EventArgs e)
+        {
+            if (Beta != this.checkBox5.Checked)
+            {
+                this.pictureBox1.Visible = true;
+            }
+            else
+            {
+                this.pictureBox1.Visible = false;
+            }
+        }
+        private void checkBox6_CheckedChanged(object sender, EventArgs e)
+        {
+            Aria2cVerbose = this.checkBox6.Checked;
+            Properties.Settings.Default.Aria2cVerbose = Aria2cVerbose;
         }
         private async void button1_Click(object sender, EventArgs e)
         {
@@ -72,6 +104,9 @@ namespace Viki
                 this.checkBox2.Checked = true;
                 this.checkBox3.Checked = true;
                 this.checkBox4.Checked = false;
+                this.checkBox5.Checked = false;
+                this.checkBox6.Checked = false;
+                this.textBox1.Text = "7000";
             });
         }
 
@@ -83,6 +118,44 @@ namespace Viki
         private void Form2_Load(object sender, EventArgs e)
         {
             ReadConfig();
+        }
+
+        private async void pictureBox1_MouseHover(object sender, EventArgs e)
+        {
+            if (this.pictureBox1.Visible)
+            {
+                toolTip1.Show("Application needs to be restarted.", this.pictureBox1);
+                await Task.Run(() =>
+                {
+                    Thread.Sleep(3000);
+                    this.pictureBox1.Visible = false;
+                });
+            }
+        }
+
+        private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar);
+        }
+
+        private void pictureBox2_MouseHover(object sender, EventArgs e)
+        {
+            toolTip1.Show("Help", this.pictureBox2);
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            foreach (Form form in Application.OpenForms)
+            {
+                if (form.Text == "Information")
+                {
+                    form.Focus();
+                    return;
+                }
+            }
+
+            Form3 f = new Form3();
+            f.Show();
         }
     }
 }

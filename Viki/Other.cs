@@ -20,10 +20,6 @@ namespace Viki
         internal static string GenerateInitDataFromKeyId(string keyId)
         {
             // WIDEVINE UUID = EDEF8BA9-79D6-4ACE-A3C8-27DCD51D21ED , PLAYREADY UUID = 9A04F079-9840-4286-AB92-E65BE0885F95
-            if (string.IsNullOrEmpty(keyId) || keyId.Length != 32 || !keyId.All("123456789abcdefABCDEF".Contains))
-            {
-                throw new Exception($"Error Generating initialization data from '{keyId}'.");
-            }
             List<byte> data = new() { 0x00, 0x00, 0x00, 50, 112, 115, 115, 104, 0x00, 0x00, 0x00, 0x00, 237, 239, 139, 169, 121, 214, 74, 206, 163, 200, 39, 220, 213, 29, 33, 237, 0x00, 0x00, 0x00, 0x12, 0x12, 0x10 };
             data.AddRange(Convert.FromHexString(keyId.Replace("-", String.Empty)));
             return Convert.ToBase64String(data.ToArray());
@@ -178,7 +174,7 @@ namespace Viki
             options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
             options.LeaveBrowserRunning = true;
 
-            ChromeDriverService chromeDriverService = ChromeDriverService.CreateDefaultService();
+            ChromeDriverService chromeDriverService = ChromeDriverService.CreateDefaultService(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\tools\"));
             chromeDriverService.HideCommandPromptWindow = true;
             DriverIsStarted = true;
             return new ChromeDriver(chromeDriverService, options);

@@ -61,6 +61,7 @@
             this.backDrop = new System.Windows.Forms.PictureBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.backDrop)).BeginInit();
             this.SuspendLayout();
             // 
@@ -69,9 +70,9 @@
             this.LogBox.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.LogBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.LogBox.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.LogBox.Location = new System.Drawing.Point(7, 107);
+            this.LogBox.Location = new System.Drawing.Point(10, 107);
             this.LogBox.Name = "LogBox";
-            this.LogBox.Size = new System.Drawing.Size(247, 285);
+            this.LogBox.Size = new System.Drawing.Size(244, 285);
             this.LogBox.TabIndex = 0;
             this.LogBox.Text = "";
             // 
@@ -137,11 +138,12 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.label4.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.label4.Location = new System.Drawing.Point(581, 165);
+            this.label4.Location = new System.Drawing.Point(571, 165);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(142, 21);
+            this.label4.Size = new System.Drawing.Size(192, 21);
             this.label4.TabIndex = 10;
-            this.label4.Text = "github.com/VarSell";
+            this.label4.Text = "https://github.com/VarSell";
+            this.label4.Click += new System.EventHandler(this.label4_Click);
             // 
             // headerMeta
             // 
@@ -378,12 +380,26 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
+            // button4
+            // 
+            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.button4.ForeColor = System.Drawing.Color.DodgerBlue;
+            this.button4.Location = new System.Drawing.Point(322, 20);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(82, 26);
+            this.button4.TabIndex = 43;
+            this.button4.Text = "Start (Beta)";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Visible = false;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(56)))), ((int)(((byte)(59)))));
             this.ClientSize = new System.Drawing.Size(793, 432);
+            this.Controls.Add(this.button4);
             this.Controls.Add(this.backDrop);
             this.Controls.Add(this.panel4);
             this.Controls.Add(this.panel6);
@@ -418,6 +434,7 @@
             this.Controls.Add(this.LogBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Viki";
@@ -463,5 +480,6 @@
         private PictureBox backDrop;
         private Button button1;
         private Button button3;
+        public Button button4;
     }
 }

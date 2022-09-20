@@ -37,10 +37,10 @@ namespace Viki
         {
             using (System.Net.WebClient client = new System.Net.WebClient())
             {
-                #pragma warning disable CS4014
+#pragma warning disable CS4014
                 // The following call is not meant to be awaited
-                Monitor(file: outFile, size:Convert.ToDouble(DetermineByteSize(url)), prg:progressBar1);
-                #pragma warning restore CS4014
+                Monitor(file: outFile, size: Convert.ToDouble(DetermineByteSize(url)), prg: progressBar1);
+#pragma warning restore CS4014
                 client.DownloadFile(url, outFile);
             }
         }
@@ -58,19 +58,19 @@ namespace Viki
             string[] credentials = File.ReadAllLines("credentials.txt");
             try
             {
-                string email = credentials[0];
-                string passwd = credentials[1];
-                if (String.IsNullOrEmpty(email) || String.IsNullOrEmpty(passwd))
+                Config.UserEmail = credentials[0];
+                Config.UserPassword = credentials[1];
+                if (String.IsNullOrEmpty(UserEmail) || String.IsNullOrEmpty(UserPassword))
                 {
                     throw new IndexOutOfRangeException();
                 }
                 Log("Logging in.");
                 LoadPage(driver, $"https://www.viki.com/sign-in?return_to={this.vikiLink.Text.Trim()}?auto_play=1");
-                string[] t = { email, passwd };
+                string[] t = { UserEmail, UserPassword };
                 int i = 0;
-                foreach (IWebElement c in driver.FindElements(By.CssSelector(".sc-dtDOqo.gELvNZ")))
+                foreach (IWebElement e in driver.FindElements(By.CssSelector(".sc-dtDOqo.gELvNZ")))
                 {
-                    c.SendKeys(t[i]);
+                    e.SendKeys(t[i]);
                     i++;
                 }
                 driver.FindElements(By.CssSelector(".sc-dtDOqo.gELvNZ"))[1].SendKeys(OpenQA.Selenium.Keys.Return);
@@ -82,6 +82,9 @@ namespace Viki
                 LoadPage(driver, this.vikiLink.Text);
             }
         }
+        /// <summary>
+        /// Loads a url with the passed driver.
+        /// </summary>
         public void LoadPage(IWebDriver driver, string uri)
         {
             driver.Navigate().GoToUrl(uri);
@@ -89,9 +92,7 @@ namespace Viki
         [STAThread] // doesn't do shit
         private async void button1_Click(object sender, EventArgs e)
         {
-            Log("[D] TestMessage.");
-            Log("Normal Message.");
-            return;
+            /*
             string DECRYPTION_KEY_TRUE = "5e1f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
             string DECRYPTION_KEY_FALSE_0 = "511f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
             string DECRYPTION_KEY_FALSE_1 = "521f3a95220e4f43b5bbbf5e6a235552:fdd89d74237b53a5a4906ed65a41ae4b";
@@ -99,28 +100,10 @@ namespace Viki
             string inFile = @"C:\Users\User\source\repos\Viki\Viki\bin\Debug\net6.0-windows\src\encVideo.mp4";
             string oFile = @"C:\Users\User\source\repos\Viki\Viki\bin\Debug\net6.0-windows\src\encVideo.mp4";
 
-            DecryptWithKeyArray(inFile, oFile, DECRYPTION_ARRAY);
-            //Log("<message>", debug: Config.Debug);
-            /*string file = @"C:\Users\User\Desktop\Files.Bak.txt";
-            byte[] b = { 0x0, 0x1, 0x0, 0x1 };
-            byte[] b = { 0x0, 0x1, 0x0, 0x1 };
-            File.WriteAllBytes(file, b);
-            foreach (byte b2 in File.ReadAllBytes(file))
-            {
-                Log(Convert.ToBoolean(b2).ToString());
-            }*/
-            //consoleControl1.StartProcess("yt-dlp", "\"https://manifest-kcp.viki.io/v1/1153146v/limelight/main/mpd/normal/kcp/high/hd/kcp/dt2_dt3/manifest.mpd?h_country=us&h_data_center=veg-2&h_host=playback-streams-68f9bdbb76-rh49b&h_timestamp=1661483431&tag=mpdhd%3Ahigh%3Akcp%3AsourceKCP%3Ampd%3Auncached%3Adt2_dt3&app=100000a&u=64977021u&sig=007214727355672d4e896b1dd72a44cdfb9ef939\" --allow-u -f ba");
+            DecryptWithKeyArray(inFile, oFile, DECRYPTION_ARRAY);*/
 
+            //consoleControl1.StartProcess("yt-dlp", "\"https://manifest-kcp.viki.io/v1/1153146v/limelight/main/mpd/normal/kcp/high/hd/kcp/dt2_dt3/manifest.mpd?\" --allow-u -f ba");
 
-            //// new idea for showing Plus download status. YT-DLP and ARIA2C cause problems for rtf boxes, so maybe a minimalistic output
-            /// like AXEL, which could report only simple percentage could be optimal. In fact, I can even plug it into the prg bar, with
-            /// no need to print as text. I just need to output only as percentage / numeric progress, then Int32.Parse() e.Data and set.
-            /// Thanks to Thomas Arch on TG for the news that this download accelerator even exists.
-            /// 
-            /// Now I just need to edit LoadViki() to add support for detecting Plus / Segmented streams.
-            /// fuck axel
-
-            return;
             await Task.Run(() =>
             {
                 try
@@ -133,6 +116,9 @@ namespace Viki
                 }
             });
         }
+        /// <summary>
+        /// Gets and Sets all needed information for the downloader.
+        /// </summary>
         public void LoadViki()
         {
             this.keyPair.Text = String.Empty;
@@ -145,6 +131,7 @@ namespace Viki
 
             try
             {
+                //Log("[D] Attempting to click html5_player_id");
                 driver.FindElement(By.Id("html5_player_id")).Click();
             }
             catch
@@ -154,8 +141,25 @@ namespace Viki
 
             Log("Scanning network.");
             string[] links = GetLinksFromDriver(driver);
+            
+            if (String.IsNullOrEmpty(links[1]))
+            {
+                Log("[D] LICENCE_ACQUISITION_FAILURE");
+                if (CachedLicense != String.Empty)
+                {
+                    // Viki license is valid until expired.
+                    Log("[D] USING_CACHED_LICENSE");
+                    links[1] = CachedLicense;
+                }
+            }
+            else
+            {
+                Log("[D] NEW_LICENSE_ACQUISITION");
+                CachedLicense = links[1];
+            }
 
-            // Look here to check if link is Plus
+            Log($"[D] Manifest: {links[0]}");
+            Log($"[D] License: {links[1]}");
 
             Log("Terminating tab.");
             ResetPage(driver);
@@ -165,8 +169,10 @@ namespace Viki
             RestRequest request = new RestRequest();
             RestResponse response = client.Execute(request);
 
+            Log("[D] Saving response.");
             File.WriteAllText(@"dump\_dump", response.Content);
 
+            Log("[D] Reading saved response.");
             string[] _temp = File.ReadAllLines(@"dump\_dump");
             string[] streams = new string[2];
             bool highFound = false;
@@ -192,14 +198,41 @@ namespace Viki
                 Log("No high found.");
                 streams = v.ParseSDStreamsLinks(@"dump\_dump");
             }
-            
-            Log($"Audio Filesize: {(DetermineByteSize(streams[0]) / 1024 / 1024).ToString()} MiB");
-            Log($"Video Filesize: {(DetermineByteSize(streams[1]) / 1024 / 1024).ToString()} MiB");
 
-            this.audioUrl.Text = streams[0];
-            this.videoUrl.Text = streams[1];
+            Log("[D] Sending header requests.");
+            long AUDIO_SIZE = DetermineByteSize(streams[0]) / 1024 / 1024;
+            long VIDEO_SIZE = DetermineByteSize(streams[1]) / 1024 / 1024;
 
+            SegmentedManifest = false;
+
+            if (AUDIO_SIZE + VIDEO_SIZE != 0)
+            {
+                IsPremiumContent = false;
+                SegmentedManifest = false;
+
+                Log($"Audio Filesize: {AUDIO_SIZE.ToString()} MiB");
+                Log($"Video Filesize: {VIDEO_SIZE.ToString()} MiB");
+
+                this.audioUrl.Text = streams[0];
+                this.videoUrl.Text = streams[1];
+            }
+            else
+            {
+                IsPremiumContent = true;
+                SegmentedManifest = true;
+
+                this.audioUrl.Text = links[0];
+                this.videoUrl.Text = links[0];
+
+                Log("Stream is segmented.");
+                Log("[D] SEGMENTED_MANIFEST");
+            }
+
+            Log("Generating initData.");
+            string initData = CalculateInitDataFromManifest(links[0]);
+            Log($"[D] {initData}");
             Log("Requesting keys.");
+
             if (!DownloadSubtitles)
             {
                 Log("Subtitles disabled.");
@@ -210,19 +243,15 @@ namespace Viki
             }
             if (!GWVK)
             {
-                string[] oL3 = File.ReadAllLines(@"wsk\l3.py");
-                oL3[0] = @$"lic_url = '{links[1]}'";
-                oL3[1] = $@"MDP_URL = '{links[0]}'";
-                oL3[22] = "pssh = get_pssh(MDP_URL)";
-                File.WriteAllLines(@"wsk\l3.py", oL3);
-                SoftWare(@"wsk/l3.py");
+                // Removed
             }
             else
             {
+                Log("[D] Editing python file.");
                 string[] file = File.ReadAllLines(@"scripts\getwvkeys.py");
                 file[10] = $"licUrl = '{links[1]}'";
                 file[11] = $"manifest = '{links[0]}'";
-                file[12] = "pssh = get_pssh(manifest)";
+                file[12] = $"pssh = '{initData}'";
                 file[21] = "    return {\"Connection\": \"keep-alive\", \"accept\": \"*/*\"}";
                 File.WriteAllLines(@"scripts\getwvkeys.py", file);
                 SoftWare(@"scripts\getwvkeys.py");
@@ -231,7 +260,7 @@ namespace Viki
             this.releaseName.Text = String.Concat(v.Title.Trim());
             this.headerMeta.Text = $"{v.TitleMeta} ({DateTime.Parse(v.ReleaseYear).Year.ToString()})";
 
-            TMDBAPIRequest(true);
+            TMDBAPIRequest();
 
             this.languageISO.Text = v.Language;
             this.releaseYear.Text = v.ReleaseYear;
@@ -239,38 +268,23 @@ namespace Viki
         /// <summary>
         /// Performs an API call to TheMovieDataBase.
         /// </summary>
-        public void TMDBAPIRequest(bool viki)
+        public void TMDBAPIRequest()
         {
             try
             {
                 string[] details = new string[5];
                 string id = string.Empty;
                 string kind = "movie";
-                if (viki)
+                
+                string formattedYear = DateTime.Parse(v.ReleaseYear).Year.ToString();
+                try
                 {
-                    string formattedYear = DateTime.Parse(v.ReleaseYear).Year.ToString();
-                    try
-                    {
-                        id = TMDB_shifter(String.Concat(v.TitleMeta.Split("-")[0].Trim(), " y:", formattedYear), kind);
-                    }
-                    catch
-                    {
-                        kind = "tv";
-                        id = TMDB_shifter(String.Concat(v.TitleMeta.Split("-")[0].Trim(), " y:", formattedYear), kind);
-                    }
+                    id = TMDB_shifter(String.Concat(v.TitleMeta.Split("-")[0].Trim(), " y:", formattedYear), kind);
                 }
-                else
+                catch
                 {
-                    // was for Mubi
-                    /*try
-                    {
-                        id = TMDB_shifter(String.Concat(m.Title, " y:", m.Year), kind);
-                    }
-                    catch
-                    {
-                        kind = "tv";
-                        id = TMDB_shifter(String.Concat(m.Title, " y:", m.Year), kind);
-                    }*/
+                    kind = "tv";
+                    id = TMDB_shifter(String.Concat(v.TitleMeta.Split("-")[0].Trim(), " y:", formattedYear), kind);
                 }
 
                 details = TMDBRequest(kind, id);
@@ -291,6 +305,11 @@ namespace Viki
         /// </summary>
         public void Log(string alert, int id = 0)
         {
+            if (LogBox.TextLength > 50000)
+            {
+                LogBox.Clear();
+                Log("Clearing history.");
+            }
             if (alert.Contains("[D]"))
             {
                 if (Config.Debug)
@@ -385,10 +404,6 @@ namespace Viki
             //35cfc571679545829b322475ac8af898:cf7c7fcaaf2380e47d6f375a5adc05ae
             if (e.Data != null)
             {
-                if (LogBox.Text.Length > 7000)
-                {
-                    LogBox.Clear();
-                }
                 if (ShowProcess_2)
                 {
                     Log(e.Data);
@@ -454,6 +469,7 @@ namespace Viki
         }
         public void ResetPage(OpenQA.Selenium.IWebDriver drv)
         {
+            driver.Manage().Logs.GetLog("performance");
             drv.Navigate().GoToUrl("about:blank");
         }
         /*
@@ -478,9 +494,12 @@ namespace Viki
             return Convert.ToBase64String(data.ToArray());
         }
 
+        private void label4_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(this.label4.Text) { UseShellExecute = true });
+        }
         private async void button2_Click(object sender, EventArgs e)
         {
-            Directory.SetCurrentDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "src"));
             if (!DriverIsStarted)
             {
                 Log("Starting driver.");
@@ -503,7 +522,7 @@ namespace Viki
                     });
                     return;
                 }
-                
+
                 await Task.Run(() =>
                 {
                     foreach (string file in Directory.GetFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump")))
@@ -518,73 +537,102 @@ namespace Viki
                 this.keyPair.Text = Clipboard.GetText().Trim();
                 if (!KeyValidation(this.keyPair.Text))
                 {
+                    Log("DECRYPTION_KEY INVALID");
                     Log("Invalid DecryptionKey, no point in continuing.");
                 }
                 v.DecryptionKey = this.keyPair.Text;
 
-                await Task.Run(() =>
-                {
-                    Log("Downloading Audio");
-                    Download(this.audioUrl.Text, @"dump\encAudio.mp4");
-                    Log("Downloading Video");
-                    Download(this.videoUrl.Text, @"dump\encVideo.mp4");
-
-                    string folder;
-                    if (String.IsNullOrEmpty(v.Release))
-                    {
-                        folder = this.releaseName.Text;
-                    }
-                    else
-                    {
-                        folder = v.Release;
-                    }
-                    try
-                    {
-                        folder = folder.Split("-")[0].Trim();
-                    }
-                    catch
-                    { 
-                        // Do nothing.
-                    }
-
-                    FilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads", folder);
-                    if (!Directory.Exists(FilePath))
-                    {
-                        Directory.CreateDirectory(FilePath);
-                    }
-
-                    v.Release = this.releaseName.Text;
-                    v.TitleMeta = this.headerMeta.Text;
-
-                    if (UseXMLTagsWhenAvailable)
-                    {
-                        LoadXmlTags();
-                    }
-                    Log("Decrypting Audio.");
-                    v.Decrypt(encFile:@"dump\encAudio.mp4", outFile:@"dump\decAudio.mp4");
-                    Log(ProcessLog);
-                    Log("Decrypting Video");
-                    v.Decrypt(encFile: @"dump\encVideo.mp4", outFile:@"dump\decVideo.mp4");
-                    Log(ProcessLog);
-                    Log("Merging.");
-                    v.Merge(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\decAudio.mp4"), Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\decVideo.mp4"), FilePath);
-                    Log(ProcessLog);
-
-                    Log("Tagging metadata.");
-                    v.Tag(Path.Combine(FilePath, this.releaseName.Text), 1);
-                    v.Tag(Path.Combine(FilePath, this.releaseName.Text), 2);
-
-                    Log(ProcessLog);
-                    Log("Cleaning temp.");
-                    Other.DeleteTemporaryData();
-                    Log("Completed.");
-                    _=EnableButtons(true);
-                });
+                _=StartDownloadAndDecryption();
             }
             catch (Exception ex)
             {
                 Record.SendBugReport(ex, new StackTrace(true), LogBox);
             }
+        }
+        public async Task StartDownloadAndDecryption()
+        {
+            await Task.Run(() =>
+            {
+                if (!SegmentedManifest)
+                {
+                    Log("Downloading Audio");
+                    Download(this.audioUrl.Text, @"dump\encAudio.mp4");
+                    Log("Downloading Video");
+                    Download(this.videoUrl.Text, @"dump\encVideo.mp4");
+                }
+                else
+                {
+                    if (Aria2cVerbose)
+                    {
+                        // Could break control in some cases.
+                        ShowProcess_2 = true;
+                    }
+                    else
+                    {
+                        ShowProcess_2 = false;
+                    }
+                    Log("ARIA2C_Downloading Audio.");
+                    SoftWare_2($"yt-dlp --allow-u -f ba --external-downloader \"tools\\aria2c.exe\" -o \"dump\\encAudio.mp4\" \"{this.audioUrl.Text}\"");
+                    Log("ARIA2C_Downloading Video.");
+                    SoftWare_2($"yt-dlp --allow-u -f bv --external-downloader \"tools\\aria2c.exe\" -o \"dump\\encVideo.mp4\" \"{this.audioUrl.Text}\"");
+                    
+                    if (!File.Exists(@"dump\encAudio.mp4") || !File.Exists(@"dump\encVideo.mp4"))
+                    {
+                        Log("[D] DOWNLOAD_FAILURE");
+                        Log("Download interrupted.");
+                    }
+                }
+                string folder = String.Empty;
+                if (String.IsNullOrEmpty(v.Release))
+                {
+                    folder = this.releaseName.Text;
+                }
+                else
+                {
+                    folder = v.Release;
+                }
+                try
+                {
+                    folder = folder.Split("-")[0].Trim();
+                }
+                catch
+                {
+                    // Do nothing.
+                }
+
+                FilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Downloads", folder);
+                if (!Directory.Exists(FilePath))
+                {
+                    Directory.CreateDirectory(FilePath);
+                }
+
+                v.Release = this.releaseName.Text;
+                v.TitleMeta = this.headerMeta.Text;
+
+                if (UseXMLTagsWhenAvailable)
+                {
+                    LoadXmlTags();
+                }
+                Log("Decrypting Audio.");
+                v.Decrypt(encFile: @"dump\encAudio.mp4", outFile: @"dump\decAudio.mp4");
+                Log(ProcessLog);
+                Log("Decrypting Video");
+                v.Decrypt(encFile: @"dump\encVideo.mp4", outFile: @"dump\decVideo.mp4");
+                Log(ProcessLog);
+                Log("Merging.");
+                v.Merge(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\decAudio.mp4"), Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump\decVideo.mp4"), FilePath);
+                Log(ProcessLog);
+
+                Log("Tagging metadata.");
+                v.Tag(Path.Combine(FilePath, this.releaseName.Text), 1);
+                v.Tag(Path.Combine(FilePath, this.releaseName.Text), 2);
+
+                Log(ProcessLog);
+                Log("Cleaning temp.");
+                DeleteTemporaryData();
+                Log("Completed.");
+                _=EnableButtons(true);
+            });
         }
         public void LoadIQIYI()
         {
@@ -593,12 +641,25 @@ namespace Viki
         }
         private async void button3_Click(object sender, EventArgs e)
         {
-            //DecryptWithKeyArray()
             //Log(GenerateInitDataFromKeyId("87fddefed5bb539ab11a478d756ffc68"));
             //Log(GenerateInitDataFromKeyId("35cfc571679545829b322475ac8af898"));
+
+            //FormCollection fc = Application.OpenForms;
+            foreach (Form form in Application.OpenForms)
+            {
+                if (form.Text == "Settings")
+                {
+                    form.Focus();
+                    return;
+                }
+            }
+
             Form2 f = new Form2();
             f.Show();
         }
+        /// <summary>
+        /// Basic structure check for a valid Key structure.
+        /// </summary>
         public bool KeyValidation(string fullKey)
         {
             if (String.IsNullOrEmpty(fullKey))
@@ -640,15 +701,35 @@ namespace Viki
         {
             await Task.Run(() =>
             {
+                bool needLogin = false;
+                this.LogBox1.Clear();
                 Log("Scanning.", 1);
-                string args = $"/c yt-dlp --all-subs --skip-download --allow-u --sub-format \"srt\" \"{this.vikiLink.Text}\" -P \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump")}\"";
-                SoftWare(args, "cmd.exe");
-                string[] subs = Directory.GetFiles($@"{AppDomain.CurrentDomain.BaseDirectory}src\dump\", "*.srt");
 
+            rescan:
+
+                string plusParam = String.Empty;
+                if ((Config.IsPremiumContent && Config.UserEmail != String.Empty && Config.UserPassword != String.Empty) || needLogin)
+                {
+                    Log("Using Login.", 1);
+                    plusParam = $"--username \"{Config.UserEmail}\" --password \"{Config.UserPassword}\"";
+                }
+
+                string args = $"yt-dlp {plusParam} --all-subs --skip-download --allow-u --sub-format \"srt\" \"{this.vikiLink.Text}\" -P \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump")}\"";
+                //ShowProcess_2 = true; //too much spamming will break the control, crashing the application
+                SoftWare_2(args);
+                string[] subs = Directory.GetFiles($@"{AppDomain.CurrentDomain.BaseDirectory}src\dump\", "*.srt");
+                if (Directory.EnumerateFiles(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump"), "*.srt", SearchOption.AllDirectories).FirstOrDefault() == null)
+                {
+                    if (!needLogin)
+                    {
+                        needLogin = true;
+                        goto rescan;
+                    }
+                }
                 foreach (string file in subs)
                 {
                     string cult = ((Path.GetFileNameWithoutExtension(file)).Split("]")[1].Replace(".", string.Empty));
-                    if (new FileInfo(file).Length > 7000)
+                    if (new FileInfo(file).Length > Properties.Settings.Default.SrtByteLimit)
                     {
                         string lang = Culture(cult);
                         Log(lang, 1);
@@ -666,9 +747,10 @@ namespace Viki
             await Task.Run(() =>
             {
                 this.button2.Enabled = enabled;
+                this.button4.Enabled = enabled;
             });
         }
-        public static List<String> tags = new List<String>();
+        internal static List<String> tags = new List<String>();
         public void LoadXmlTags()
         {
             if (String.IsNullOrEmpty(this.tmdb.Text))
@@ -734,7 +816,8 @@ namespace Viki
         }
         public string[] TMDBRequest(string kind, string id)
         {
-            string url = $"https://api.themoviedb.org/3/{kind}/{id}?api_key=dc0141096c9d0bb09bdde4025387888b";
+            string url = $"https://api.themoviedb.org/3/{kind}/{id}?api_key=INVALID_DATA";
+
             RestClient client = new RestClient(url);
             RestRequest request = new RestRequest();
             RestResponse response = client.Execute(request);
@@ -743,8 +826,8 @@ namespace Viki
             {
                 string[] details = new string[7];
                 TheMovieDataBaseAPIResponse.Rootobject result = JsonConvert.DeserializeObject<TheMovieDataBaseAPIResponse.Rootobject>(response.Content);
-                TheMovieDataBaseAPIResponse.Production_Countries P_C = JsonConvert.DeserializeObject<TheMovieDataBaseAPIResponse.Production_Countries>(response.Content);
-                
+                //TheMovieDataBaseAPIResponse.Production_Countries P_C = JsonConvert.DeserializeObject<TheMovieDataBaseAPIResponse.Production_Countries>(response.Content);
+
                 if (kind == "movie")
                 {
                     details[0] = result.title.Trim();
@@ -763,18 +846,22 @@ namespace Viki
                     details[4] = String.Empty;
                     details[5] = result.id.ToString().Trim();
                 }
+                Log("[D] Loading backdrop.");
                 this.backDrop.Load($"https://image.tmdb.org/t/p/original{result.poster_path}");
                 return details;
             }
             else
             {
-                Log($"ERROR {response.StatusCode}");
+                Log("[D] TMDB_FAILURE");
+                Log($"[D] ERROR {response.StatusCode}");
+                this.backDrop.Image = Properties.Resources.murderCat;
+                this.backDrop.Refresh();
                 return null;
             }
         }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //MessageBox.Show(e.CloseReason.ToString());
+            Log(String.Concat("[D]", e.CloseReason.ToString()));
             try
             {
                 Log("Quitting driver.");
@@ -786,15 +873,131 @@ namespace Viki
             }
             Application.Exit();
         }
-
         private void Form1_Load(object sender, EventArgs e)
         {
+            if (Config.Beta)
+            {
+                this.button4.Visible = true;
+            }
+            Directory.SetCurrentDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "src"));
             this.vikiLink.Text = "https://www.viki.com/videos/1115053v";
             Log(Environment.MachineName);
-            Log($"Version {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
+            Log($"[D] Version {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
             //Log(Environment.OSVersion.ToString());
-            Log($"Runtime {Environment.Version.ToString()}");
+            Log($"[D] Runtime {Environment.Version.ToString()}");
+            ChromeVersionCheck();
             Log("Application started.");
+        }
+
+        private void ChromeVersionCheck()
+        {
+            try
+            {
+                object path;
+                path = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
+                if (String.IsNullOrEmpty(path.ToString()))
+                {
+                    path = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
+                }
+                Log("Chrome: " + FileVersionInfo.GetVersionInfo(path.ToString()).FileVersion);
+            }
+            catch
+            {
+                Log("Chrome: UNREACHABLE");
+            }
+        }
+
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            List<string> links = new List<string>();
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (!NetworkIsAvailable())
+                    {
+                        Log("No connection.");
+                        return;
+                    }
+                    if (!DriverIsStarted)
+                    {
+                        Log("Starting driver.");
+                        driver = GetDriver();
+                    }
+                    if (!this.vikiLink.Text.StartsWith("https://www.viki.com/tv/"))
+                    {
+                        Log("Given url is not valid.");
+                        return;
+                    }
+
+                    string urlParam = "episodes.json?token=undefined&direction=asc&with_upcoming=true&sort=number&blocked=true&only_ids=true&app=100000a";
+                    if (this.vikiLink.Text.Contains("-"))
+                    {
+                        this.vikiLink.Text = this.vikiLink.Text.Split("-")[0];
+                    }
+                    if (!this.vikiLink.Text.EndsWith("/"))
+                    {
+                        this.vikiLink.Text = String.Concat(this.vikiLink.Text, "/");
+                    }
+                    string constrUrl = String.Concat("https://api.viki.io/v4/containers/", this.vikiLink.Text.Split("/tv/")[1], urlParam);
+                    Log("[D]" + constrUrl);
+                    string response = GetSourceHTML(constrUrl);
+                    Log("[D]" + response);
+
+                    response = response.Split("response")[1];
+                    char[] arr = response.Where(c => (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c))).ToArray();
+
+                    response = new string(arr);
+                    string[] episodes = response.Split("v");
+                    for (int i = 0; i < episodes.Length - 1; i++)
+                    {
+                        episodes[i] = String.Concat("https://www.viki.com/videos/", episodes[i], "v");
+                        links.Add(episodes[i]);
+                    }
+                    Log("(Beta) Episodes: " + ((episodes.Length -1).ToString()));
+
+                });
+
+                int lnkPos = 0;
+                foreach (string link in links)
+                {
+                    _=EnableButtons(false);
+                    lnkPos++;
+                    Log("Processing " + lnkPos.ToString(), 1);
+                    this.vikiLink.Text = link;
+                    await Task.Run(() =>
+                    {
+                        DeleteTemporaryData();
+                        LoadViki();
+                        if (Int32.Parse(v.Title.Split("Episode")[1].Trim()) != lnkPos)
+                        {
+                            this.releaseName.Text = String.Concat(v.Title.Split("Episode")[0].Trim(), " Episode ", lnkPos.ToString());
+                        }
+                        _=EnableButtons(false);
+                    });
+
+                    // Thread needs to be static for clipboard access.
+                    this.keyPair.Text = Clipboard.GetText().Trim();
+                    Clipboard.Clear();
+                    if (!KeyValidation(this.keyPair.Text))
+                    {
+                        Log("DECRYPTION_KEY INVALID");
+                        Log("Invalid DecryptionKey, no point in continuing.");
+                    }
+
+                    v.DecryptionKey = this.keyPair.Text;
+
+                    await Task.Run(async () =>
+                    {
+                        await StartDownloadAndDecryption();
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Record.SendBugReport(ex, new StackTrace(true), LogBox);
+            }
+            return;
         }
     }
 }
