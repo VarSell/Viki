@@ -9,7 +9,7 @@ namespace Viki
 {
     internal static class Config
     {
-        public const Boolean GWVK = true;
+        public const Boolean LOCAL_REQUEST = true;
         //private static readonly Byte[] data = File.ReadAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\data\config"));
         internal static Boolean Feedback { get; set; } = Properties.Settings.Default.Feedback;
         internal static Boolean DownloadSubtitles { get; set; } = Properties.Settings.Default.DownloadSubtitles;

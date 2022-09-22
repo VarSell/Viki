@@ -55,15 +55,20 @@ namespace Viki
             {
                 try
                 {
-                    void Log(string message)
+                    void Log(string message, Color color)
                     {
+                        rtf.SelectionStart = rtf.TextLength;
+                        rtf.SelectionLength = 0;
+
+                        rtf.SelectionColor = color;
                         rtf.AppendText(" - "+message+Environment.NewLine);
+                        rtf.SelectionColor = rtf.ForeColor;
                         rtf.ScrollToCaret();
                     }
-                    Log("Error: " + ex.Message);
+                    Log("Error: " + ex.Message, Color.DarkRed);
                     if (!Feedback)
                         return;
-                    Log("Compiling bug report.");
+                    Log("Compiling bug report.", Color.Green);
                     var fromAddress = new MailAddress("INVALID_DATA", Environment.MachineName);
                     var toAddress = new MailAddress("INVALID_DATA", "Reciever");
                     const string fromPassword = "INVALID_DATA";
@@ -87,14 +92,14 @@ namespace Viki
                     {
                         try
                         {
-                            Log("Sending bug report.");
+                            Log("Sending bug report.", Color.DarkGreen);
                             smtp.Send(message);
-                            Log("Success.");
+                            Log("Success.", Color.DarkGreen);
                         }
                         catch (Exception ex)
                         {
-                            Log("Error sending bug report. Message:");
-                            Log(ex.Message);
+                            Log("Error sending bug report. Message:", Color.DarkRed);
+                            Log(ex.Message, Color.Red);
                             MessageBox.Show(message.Body);
                         }
                     }

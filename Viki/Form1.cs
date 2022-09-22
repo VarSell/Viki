@@ -45,7 +45,7 @@ namespace Viki
                 LoadPage(driver, this.vikiLink.Text.Trim());
                 return;
             }
-            string[] credentials = File.ReadAllLines("credentials.txt");
+            string[] credentials = File.ReadAllLines(@"data\User\credentials.txt");
             try
             {
                 UserEmail = credentials[0];
@@ -140,7 +140,7 @@ namespace Viki
             Log($"[D] License: {links[1]}");
 
             Log("Terminating tab.");
-            ResetPage(driver);
+            //ResetPage(driver);
             Log("Downloading manifest.");
 
             RestClient client = new RestClient(links[0]);
@@ -219,20 +219,13 @@ namespace Viki
             {
                 _=ScanSubs();
             }
-            if (!GWVK)
+            if (LOCAL_REQUEST)
             {
                 // Removed
             }
             else
             {
-                Log("[D] Editing python file.");
-                string[] file = File.ReadAllLines(@"scripts\getwvkeys.py");
-                file[10] = $"licUrl = '{links[1]}'";
-                file[11] = $"manifest = '{links[0]}'";
-                file[12] = $"pssh = '{initData}'";
-                file[21] = "    return {\"Connection\": \"keep-alive\", \"accept\": \"*/*\"}";
-                File.WriteAllLines(@"scripts\getwvkeys.py", file);
-                SoftWare(@"scripts\getwvkeys.py");
+                // Removed
             }
 
             this.releaseName.Text = String.Concat(v.Title.Trim());
@@ -283,6 +276,10 @@ namespace Viki
         /// </summary>
         public void Log(string alert, int id = 0)
         {
+            if (String.IsNullOrEmpty(alert))
+            {
+                return;
+            }
             if (LogBox.TextLength > 50000)
             {
                 LogBox.Clear();
@@ -318,6 +315,7 @@ namespace Viki
                 this.LogBox1.AppendText(alert);
                 this.LogBox1.ScrollToCaret();
             }
+            File.AppendAllText(@"data\Application\logfile.log", alert);
         }
         /// <summary>
         /// Starts the given executable (default=python) with the given arguments.
@@ -380,7 +378,7 @@ namespace Viki
             LogBox.ScrollToCaret();
             if (e.Data != null)
             {
-                if (ShowProcess_2)
+                if (ShowProcess_2 || Aria2cVerbose)
                 {
                     Log(e.Data);
                 }
@@ -608,8 +606,16 @@ namespace Viki
                 string plusParam = String.Empty;
                 if ((IsPremiumContent && UserEmail != String.Empty && UserPassword != String.Empty) || needLogin)
                 {
-                    Log("Using Login.", 1);
-                    plusParam = $"--username \"{Config.UserEmail}\" --password \"{Config.UserPassword}\"";
+                    if (!String.IsNullOrEmpty(File.ReadAllText(@"data\User\cookies.txt")))
+                    {
+                        Log("Using cookies.", 1);
+                        plusParam = "--cookies \"data\\User\\cookies.txt\"";
+                    }
+                    else
+                    {
+                        Log("Using Login.", 1);
+                        plusParam = $"--username \"{Config.UserEmail}\" --password \"{Config.UserPassword}\"";
+                    }
                 }
 
                 string args = $"yt-dlp {plusParam} --all-subs --skip-download --allow-u --sub-format \"srt\" \"{this.vikiLink.Text}\" -P \"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"src\dump")}\"";
@@ -772,32 +778,13 @@ namespace Viki
             {
                 this.button4.Visible = true;
             }
-            Directory.SetCurrentDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "src"));
             this.vikiLink.Text = "https://www.viki.com/videos/1115053v";
-            Log(Environment.MachineName);
-            Log($"[D] Version {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
-            //Log(Environment.OSVersion.ToString());
-            Log($"[D] Runtime {Environment.Version.ToString()}");
+            foreach (string check in StartUpCheck())
+            {
+                Log(check);
+            }
             ChromeVersionCheck();
             Log("Application started.");
-        }
-
-        private void ChromeVersionCheck()
-        {
-            try
-            {
-                object path;
-                path = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
-                if (String.IsNullOrEmpty(path.ToString()))
-                {
-                    path = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
-                }
-                Log("Chrome: " + FileVersionInfo.GetVersionInfo(path.ToString()).FileVersion);
-            }
-            catch
-            {
-                Log("Chrome: UNREACHABLE");
-            }
         }
 
         private async void button4_Click(object sender, EventArgs e)

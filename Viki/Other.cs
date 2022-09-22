@@ -4,6 +4,7 @@ using OpenQA.Selenium.Chrome;
 using RestSharp;
 using System.Net;
 using static Viki.Config;
+using System.Diagnostics;
 
 namespace Viki
 {
@@ -242,6 +243,38 @@ namespace Viki
             }
 
             return new string[] { mpd, lic };
+        }
+        /// <summary>
+        /// Checks Registry for current Chrome installation version.
+        /// </summary>
+        /// <returns>Chrome version</returns>
+        internal static string ChromeVersionCheck()
+        {
+            try
+            {
+                object path;
+                path = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
+                if (String.IsNullOrEmpty(path.ToString()))
+                {
+                    path = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null) ?? String.Empty;
+                }
+                return "Chrome: " + FileVersionInfo.GetVersionInfo(path.ToString()).FileVersion;
+            }
+            catch
+            {
+                return "Chrome: UNREACHABLE";
+            }
+        }
+        internal static string[] StartUpCheck()
+        {
+            Directory.SetCurrentDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "src"));
+            File.AppendAllText(@"data\Application\logfile.log", String.Concat("\n\n", DateTime.Now.ToString("dd_MM_yyyy - HH_mm_ss"), "\n\n"));
+            return new string[]
+            { 
+                Environment.MachineName,
+                $"[D] Version {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()}",
+                $"[D] Runtime {Environment.Version.ToString()}"
+            };
         }
         internal static void ResetPage(IWebDriver drv)
         {
